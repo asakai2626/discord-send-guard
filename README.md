@@ -1,196 +1,162 @@
 # Discord Send Guard
 
-Discordでメッセージを送信する際、Enterキーの誤送信を防止するツール。
+Discordでの誤送信を防止するツール。Enterキーの挙動を変更し、うっかり送信を防ぎます。
 
-## 概要
+## どう変わる？
 
-Discord Send Guardは、Discordがアクティブウィンドウのときだけ、キー操作を以下のように変更します:
+| キー操作 | 変更前 | 変更後 |
+|---------|--------|--------|
+| Enter | メッセージ送信 | **改行**（送信しない） |
+| Cmd+Enter (Mac) / Ctrl+Enter (Win) | 改行 | **メッセージ送信** |
 
-- **Enterキー単体** → 改行（送信しない）
-- **Cmd+Enter (Mac) / Ctrl+Enter (Windows)** → 送信
+> ⚠️ Discord がアクティブウィンドウのときだけ動作します。他のアプリには一切影響しません。
 
-これにより、長文を書いている途中での誤送信を防止できます。
+---
 
-## 特徴
+## ダウンロード＆インストール
 
-- Discord限定の動作（他のアプリには影響なし）
-- クロスプラットフォーム対応（macOS、Windows）
-- 軽量・バックグラウンド常駐
-- CLI操作のみ（GUIなし）
-- セキュアな設計（Discord以外のキー入力はキャプチャしない）
+### 必要なもの
 
-## 動作環境
+- **Python 3.7以上**（[python.org](https://www.python.org/downloads/) からインストール）
+- **Git**（[git-scm.com](https://git-scm.com/) からインストール）
+- **macOS 10.13+** または **Windows 10+**
 
-- Python 3.7以上
-- macOS 10.13以上 または Windows 10以上
+### Step 1: リポジトリをダウンロード
 
-## インストール
-
-### 1. リポジトリのクローン
+ターミナル（Mac）またはコマンドプロンプト（Windows）を開いて：
 
 ```bash
-cd code/discord-send-guard
+git clone https://github.com/asakai2626/discord-send-guard.git
+cd discord-send-guard
 ```
 
-### 2. 依存関係のインストール
+> 💡 Gitがない場合は [GitHub のページ](https://github.com/asakai2626/discord-send-guard) から「Code → Download ZIP」でもOK
+
+### Step 2: 仮想環境を作成（推奨）
+
+```bash
+# Mac / Linux
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Windows
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+### Step 3: 依存関係をインストール
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### macOS固有の設定
+### Step 4: macOS のみ — アクセシビリティ権限の設定
 
-macOSでは**アクセシビリティ権限**が必要です。
+macOSではキーボード操作に**アクセシビリティ権限**が必要です。
 
-1. システム設定を開く
-2. 「プライバシーとセキュリティ」→「アクセシビリティ」に移動
-3. 実行するターミナルアプリ（ターミナル、iTerm2など）に権限を付与
+1. **システム設定** を開く
+2. **プライバシーとセキュリティ** → **アクセシビリティ** を選択
+3. 左下の鍵アイコンをクリックしてロック解除
+4. **＋ボタン** で使用するターミナルアプリを追加：
+   - 標準ターミナル: `/Applications/Utilities/Terminal.app`
+   - iTerm2: `/Applications/iTerm.app`
+   - VS Code のターミナル: `/Applications/Visual Studio Code.app`
+5. チェックを入れて有効化
 
-### Windows固有の設定
+> ⚠️ 権限を追加した後、ターミナルを**再起動**してください。
 
-Windowsでは管理者権限が必要な場合があります。必要に応じて管理者としてコマンドプロンプトやPowerShellを実行してください。
+---
 
-## 使用方法
+## 使い方
 
-### 基本的な使い方
+### 起動
 
 ```bash
 python run.py
 ```
 
-または
+起動すると以下のメッセージが表示されます：
 
-```bash
-python discord_send_guard.py
+```
+Discord Send Guard v1.0.0
+Discord Send Guard is running...
+Press Ctrl+C to stop
 ```
 
+### 動作確認
+
+1. Discordを開いてメッセージ入力欄にカーソルを置く
+2. **Enter** を押す → 改行される（送信されない！）
+3. **Cmd+Enter** (Mac) / **Ctrl+Enter** (Win) を押す → メッセージが送信される
+4. 他のアプリ（ブラウザなど）に切り替えてEnterを押す → 通常通り動作
+
 ### デバッグモード
+
+問題があるときはデバッグモードで起動：
 
 ```bash
 python run.py --debug
 ```
 
-デバッグモードでは、以下の情報がログに出力されます:
+キー入力やウィンドウ検出のログがリアルタイムで表示されます。
 
-- アクティブなアプリケーション名
-- 押されたキー（修飾キー、Enterキー）
-- キーイベントの処理内容
-
-### 停止方法
+### 停止
 
 **Ctrl+C** で停止します。
 
-## 動作確認
-
-1. Discord Send Guardを起動
-2. Discordを開く
-3. メッセージ入力欄で以下を試す:
-   - **Enterキー単体** → 改行される
-   - **Cmd+Enter (Mac) / Ctrl+Enter (Windows)** → メッセージが送信される
-4. 他のアプリ（ブラウザ、メモ帳など）を開く
-5. Enterキーが通常通り動作することを確認
-
-## テスト
-
-ユニットテストを実行:
-
-```bash
-python -m pytest tests/ -v
-```
-
-または
-
-```bash
-cd tests
-python test_discord_send_guard.py
-```
+---
 
 ## トラブルシューティング
 
-### macOS: "Operation not permitted" エラー
+### 「Operation not permitted」エラー（Mac）
 
-アクセシビリティ権限が付与されていません。上記の「macOS固有の設定」を参照してください。
+→ アクセシビリティ権限が未設定です。上の「Step 4」を確認してください。
 
-### macOS: "AppKit not available" エラー
-
-以下をインストール:
+### 「AppKit not available」エラー（Mac）
 
 ```bash
 pip install pyobjc-framework-Cocoa
 ```
 
-### Windows: "win32gui not available" エラー
-
-以下をインストール:
+### 「win32gui not available」エラー（Windows）
 
 ```bash
 pip install pywin32
 ```
 
-### Enterキーが反応しない
+### Enterを押しても何も起きない
 
 1. デバッグモードで起動: `python run.py --debug`
-2. ログを確認し、Discordが正しく検出されているか確認
-3. Discordのウィンドウ名に"discord"が含まれているか確認
+2. Discordがアクティブウィンドウとして検出されているかログを確認
+3. ターミナルのアクセシビリティ権限を再確認
 
-### 他のアプリでもEnterキーの挙動が変わる
+---
 
-バグの可能性があります。以下の情報を添えてIssueを報告してください:
+## テスト
 
-- OS名とバージョン
-- 影響を受けるアプリケーション名
-- デバッグログ
+```bash
+python -m pytest tests/ -v
+```
 
-## 技術詳細
+14件のテストが全てパスすればOKです。
 
-### アーキテクチャ
+---
 
-- **キーフック**: `pynput`ライブラリを使用
-- **アクティブウィンドウ検出**:
-  - macOS: `AppKit.NSWorkspace`
-  - Windows: `win32gui`
+## 技術仕様
 
-### キーイベントの処理フロー
+- **キーフック**: `pynput` ライブラリ
+- **ウィンドウ検出**: `AppKit.NSWorkspace`（Mac） / `win32gui`（Windows）
+- **動作原理**: Enter単体 → ブロック＆Shift+Enter送信（改行）、修飾キー+Enter → パススルー（送信）
+- **セキュリティ**: キーロギングなし。Discord以外のキー入力は改変しない
 
-1. キー押下イベントをキャプチャ
-2. 修飾キー（Cmd/Ctrl）の状態を記録
-3. Enterキーが押された場合:
-   - Discordがアクティブでない → 通常動作
-   - Discordがアクティブ:
-     - 修飾キーあり → 送信を許可
-     - 修飾キーなし → Shift+Enterに変換（改行）
-
-### セキュリティ考慮事項
-
-- Discord以外のアプリでは、キー入力を監視するのみで改変しない
-- キーロギングは行わない（ログにキー内容は記録しない）
-- 最小権限の原則に基づき、必要な権限のみ要求
+---
 
 ## ライセンス
 
 MIT License
 
-## 貢献
+## 開発チーム
 
-バグ報告、機能リクエスト、プルリクエストを歓迎します。
-
-## 開発者
-
-- PO: 浅野 海翔 (Asakai)
-- PM: ideaccept-openclaw
-- Dev: Claude Code
-
-## バージョン履歴
-
-### v1.0.0 (2026-02-11)
-
-- 初回リリース
-- macOS、Windows対応
-- Enterキー/Cmd+Enter/Ctrl+Enterの挙動変更機能
-- Discord検出機能
-- CLI操作
-- ユニットテスト
-
-## 関連ドキュメント
-
-- [要件定義書](../../docs/discord-send-guard/REQUIREMENTS.md)
+- **PO**: 浅野 海翔 (Asakai)
+- **PM**: ideaccept-openclaw
+- **Dev**: Claude Code
