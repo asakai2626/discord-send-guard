@@ -1,4 +1,15 @@
 # Discord Send Guard - Dependencies
+
+# Core dependencies
 pynput>=1.7.6
 pyobjc-framework-Cocoa>=9.0  # macOS only - for window detection
-pytest>=7.0.0  # for testing
+
+# GUI dependencies
+rumps>=0.4.0  # macOS menu bar app
+Pillow>=10.0.0  # Image generation for guide
+
+# Build dependencies
+py2app>=0.28.0  # macOS app bundling
+
+# Testing
+pytest>=7.0.0

@@ -1,6 +1,6 @@
-# Discord Send Guard
+# Discord Send Guard v2.0
 
-Discordでの誤送信を防止するツール。Enterキーの挙動を変更し、うっかり送信を防ぎます。
+Discordでの誤送信を防止する**メニューバーアプリ**。Enterキーの挙動を変更し、うっかり送信を防ぎます。
 
 ## どう変わる？
 
@@ -13,17 +13,26 @@ Discordでの誤送信を防止するツール。Enterキーの挙動を変更�
 
 ---
 
+## v2.0の新機能
+
+- 🎯 **メニューバーアプリ化** - 常駐してバックグラウンドで動作
+- 🚀 **自動起動** - macOSログイン時に自動スタート
+- 🎨 **GUI設定画面** - 視覚的に設定を変更
+- 📖 **セットアップウィザード** - 初回起動時のガイド付きセットアップ
+- ✅ **権限チェック** - アクセシビリティ権限の確認と設定ガイド
+
+---
+
 ## ダウンロード＆インストール
 
 ### 必要なもの
 
 - **Python 3.7以上**（[python.org](https://www.python.org/downloads/) からインストール）
-- **Git**（[git-scm.com](https://git-scm.com/) からインストール）
-- **macOS 10.13+** または **Windows 10+**
+- **macOS 10.13+**
 
 ### Step 1: リポジトリをダウンロード
 
-ターミナル（Mac）またはコマンドプロンプト（Windows）を開いて：
+ターミナルを開いて：
 
 ```bash
 git clone https://github.com/asakai2626/discord-send-guard.git
@@ -35,13 +44,8 @@ cd discord-send-guard
 ### Step 2: 仮想環境を作成（推奨）
 
 ```bash
-# Mac / Linux
 python3 -m venv .venv
 source .venv/bin/activate
-
-# Windows
-python -m venv .venv
-.venv\Scripts\activate
 ```
 
 ### Step 3: 依存関係をインストール
@@ -50,26 +54,36 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-### Step 4: macOS のみ — アクセシビリティ権限の設定
-
-macOSではキーボード操作に**アクセシビリティ権限**が必要です。
-
-1. **システム設定** を開く
-2. **プライバシーとセキュリティ** → **アクセシビリティ** を選択
-3. 左下の鍵アイコンをクリックしてロック解除
-4. **＋ボタン** で使用するターミナルアプリを追加：
-   - 標準ターミナル: `/Applications/Utilities/Terminal.app`
-   - iTerm2: `/Applications/iTerm.app`
-   - VS Code のターミナル: `/Applications/Visual Studio Code.app`
-5. チェックを入れて有効化
-
-> ⚠️ 権限を追加した後、ターミナルを**再起動**してください。
-
 ---
 
 ## 使い方
 
-### 起動
+### GUIアプリとして起動（推奨）
+
+```bash
+python app.py
+```
+
+初回起動時は**セットアップウィザード**が表示されます：
+
+1. **Welcome** - アプリの説明
+2. **アクセシビリティ権限の設定** - ステップバイステップガイド
+3. **自動起動の設定** - ログイン時の自動スタートを選択
+4. **完了** - すぐに使い始められます！
+
+### メニューバーから操作
+
+アプリを起動すると、メニューバーに🛡️アイコンが表示されます：
+
+- **✓ Enabled / ✗ Disabled** - 現在の状態
+- **Enable / Disable** - 機能のオン/オフ切り替え
+- **Settings...** - 設定画面を開く
+- **Permission Guide...** - 権限設定ガイドを表示
+- **View Logs** - ログファイルをConsoleで開く
+- **About** - バージョン情報
+- **Quit** - アプリを終了
+
+### CLIモード（従来の方法も使えます）
 
 ```bash
 python run.py
@@ -83,26 +97,60 @@ Discord Send Guard is running...
 Press Ctrl+C to stop
 ```
 
-### 動作確認
+---
 
-1. Discordを開いてメッセージ入力欄にカーソルを置く
-2. **Enter** を押す → 改行される（送信されない！）
-3. **Cmd+Enter** (Mac) / **Ctrl+Enter** (Win) を押す → メッセージが送信される
-4. 他のアプリ（ブラウザなど）に切り替えてEnterを押す → 通常通り動作
+## .appバンドルのビルド（配布用）
 
-### デバッグモード
-
-問題があるときはデバッグモードで起動：
+py2appを使ってmacOS .appバンドルを作成できます：
 
 ```bash
-python run.py --debug
+# ビルド
+python setup.py py2app
+
+# 生成された.appを実行
+open dist/Discord\ Send\ Guard.app
 ```
 
-キー入力やウィンドウ検出のログがリアルタイムで表示されます。
+ビルドされた `.app` はそのままダブルクリックで起動できます。
 
-### 停止
+---
 
-**Ctrl+C** で停止します。
+## 設定
+
+設定は `~/.discord-send-guard/config.json` に保存されます：
+
+```json
+{
+  "enabled": true,
+  "autostart": false,
+  "debug": false,
+  "first_run": true
+}
+```
+
+GUIの設定画面から変更できます。
+
+---
+
+## 自動起動の設定
+
+### GUIから設定（推奨）
+
+1. メニューバーアイコンをクリック
+2. **Settings...** を選択
+3. **Start automatically on login** にチェック
+4. **Save** をクリック
+
+### 手動設定
+
+LaunchAgentが `~/Library/LaunchAgents/com.ideaccept.discord-send-guard.plist` に作成されます。
+
+無効にする場合：
+
+```bash
+launchctl unload ~/Library/LaunchAgents/com.ideaccept.discord-send-guard.plist
+rm ~/Library/LaunchAgents/com.ideaccept.discord-send-guard.plist
+```
 
 ---
 
@@ -110,25 +158,33 @@ python run.py --debug
 
 ### 「Operation not permitted」エラー（Mac）
 
-→ アクセシビリティ権限が未設定です。上の「Step 4」を確認してください。
+→ アクセシビリティ権限が未設定です。
 
-### 「AppKit not available」エラー（Mac）
+1. メニューバーアイコンから **Permission Guide...** を選択
+2. ステップバイステップガイドに従って設定
 
-```bash
-pip install pyobjc-framework-Cocoa
-```
+または手動で：
 
-### 「win32gui not available」エラー（Windows）
+1. **システム設定** を開く
+2. **プライバシーとセキュリティ** → **アクセシビリティ** を選択
+3. 左下の鍵アイコンをクリックしてロック解除
+4. **＋ボタン** で使用するPythonまたはアプリを追加
+5. チェックを入れて有効化
 
-```bash
-pip install pywin32
-```
+> ⚠️ 権限を追加した後、アプリを**再起動**してください。
 
 ### Enterを押しても何も起きない
 
-1. デバッグモードで起動: `python run.py --debug`
-2. Discordがアクティブウィンドウとして検出されているかログを確認
-3. ターミナルのアクセシビリティ権限を再確認
+1. メニューバーアイコンから状態を確認（Enabled になっているか）
+2. **Settings...** → **Enable debug logging** をオンにして再起動
+3. **View Logs** でログを確認
+
+### メニューバーアイコンが表示されない
+
+```bash
+# ターミナルから起動してエラーを確認
+python app.py
+```
 
 ---
 
@@ -144,10 +200,76 @@ python -m pytest tests/ -v
 
 ## 技術仕様
 
+### アーキテクチャ
+
+```
+discord-send-guard/
+├── app.py                    # メニューバーアプリ（メインエントリーポイント）
+├── discord_send_guard.py     # コアロジック（キーフック）
+├── run.py                    # CLIエントリーポイント（後方互換）
+├── gui/
+│   ├── setup_wizard.py       # 初回セットアップウィザード
+│   ├── settings_window.py    # 設定画面
+│   └── permission_guide.py   # 権限設定ガイド
+├── utils/
+│   ├── config.py             # 設定ファイル管理
+│   ├── permissions.py        # アクセシビリティ権限チェック
+│   └── autostart.py          # LaunchAgent管理
+├── assets/
+│   ├── icon.png              # メニューバーアイコン
+│   ├── app_icon.icns         # アプリアイコン
+│   └── guide/                # ガイド用画像
+└── setup.py                  # py2app対応
+```
+
+### 技術スタック
+
 - **キーフック**: `pynput` ライブラリ
-- **ウィンドウ検出**: `AppKit.NSWorkspace`（Mac） / `win32gui`（Windows）
-- **動作原理**: Enter単体 → ブロック＆Shift+Enter送信（改行）、修飾キー+Enter → パススルー（送信）
-- **セキュリティ**: キーロギングなし。Discord以外のキー入力は改変しない
+- **ウィンドウ検出**: `AppKit.NSWorkspace`（Mac）
+- **メニューバーアプリ**: `rumps`
+- **GUI**: `tkinter`（Python標準ライブラリ）
+- **画像生成**: `Pillow`
+- **アプリバンドル**: `py2app`
+
+### 動作原理
+
+- Enter単体 → ブロック＆Shift+Enter送信（改行）
+- 修飾キー+Enter → パススルー（送信）
+
+### セキュリティ
+
+- キーロギングなし
+- Discord以外のキー入力は改変しない
+- ローカルのみで動作（ネットワーク通信なし）
+
+---
+
+## 開発
+
+### 開発環境のセットアップ
+
+```bash
+# 仮想環境を作成
+python3 -m venv .venv
+source .venv/bin/activate
+
+# 依存関係をインストール
+pip install -r requirements.txt
+
+# 開発モードで起動
+python app.py
+```
+
+### デバッグモード
+
+```bash
+# CLIモード
+python run.py --debug
+
+# GUIモード - Settings → Enable debug logging
+```
+
+ログファイル: `~/Library/Logs/com.ideaccept.discord-send-guard.log`
 
 ---
 
@@ -160,3 +282,12 @@ MIT License
 - **PO**: 浅野 海翔 (Asakai)
 - **PM**: ideaccept-openclaw
 - **Dev**: Claude Code
+
+## リンク
+
+- [GitHub](https://github.com/asakai2626/discord-send-guard)
+- [問題を報告](https://github.com/asakai2626/discord-send-guard/issues)
+
+---
+
+**v2.0 - 2025** | macOS Menu Bar App Edition

@@ -16,9 +16,35 @@ with open('README.md', 'r', encoding='utf-8') as f:
 with open('requirements.txt', 'r', encoding='utf-8') as f:
     requirements = [line.strip() for line in f if line.strip() and not line.startswith('#')]
 
+# py2app configuration
+APP = ['app.py']
+DATA_FILES = [
+    ('assets/guide', [
+        'assets/guide/step1_system_settings.png',
+        'assets/guide/step2_privacy.png',
+        'assets/guide/step3_accessibility.png',
+        'assets/guide/step4_add_app.png',
+    ]),
+]
+
+OPTIONS = {
+    'argv_emulation': False,
+    'packages': ['rumps', 'pynput', 'tkinter', 'PIL'],
+    'iconfile': 'assets/app_icon.icns',  # Will be created
+    'plist': {
+        'CFBundleName': 'Discord Send Guard',
+        'CFBundleDisplayName': 'Discord Send Guard',
+        'CFBundleIdentifier': 'com.ideaccept.discord-send-guard',
+        'CFBundleVersion': '2.0.0',
+        'CFBundleShortVersionString': '2.0.0',
+        'LSUIElement': True,  # Run as menu bar app (no dock icon)
+        'NSHumanReadableCopyright': '© 2025 Asakai & ideaccept-openclaw',
+    },
+}
+
 setup(
     name='discord-send-guard',
-    version='1.0.0',
+    version='2.0.0',
     description='Prevent accidental message sends in Discord',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -26,8 +52,13 @@ setup(
     author_email='noreply@anthropic.com',
     url='https://github.com/ideaccept-openclaw/discord-send-guard',
     py_modules=['discord_send_guard'],
+    packages=find_packages(),
     install_requires=requirements,
     python_requires='>=3.7',
+    app=APP,
+    data_files=DATA_FILES,
+    options={'py2app': OPTIONS},
+    setup_requires=['py2app'],
     entry_points={
         'console_scripts': [
             'discord-send-guard=discord_send_guard:main',
