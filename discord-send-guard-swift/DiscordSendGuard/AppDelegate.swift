@@ -3,6 +3,7 @@ import AppKit
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     private let keyInterceptor = KeyInterceptor()
+    private var permissionTimer: Timer?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         DiscordDetector.startMonitoring()
@@ -11,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        permissionTimer?.invalidate()
         keyInterceptor.stop()
     }
 
@@ -33,7 +35,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
 
         // Status
-        let statusText = SettingsManager.shared.guardEnabled ? "✓ ガード有効" : "✗ ガード無効"
+        let hasPerm = PermissionManager.isTrusted()
+        let statusText: String
+        if !hasPerm {
+            statusText = "⚠ 権限が必要です"
+        } else if SettingsManager.shared.guardEnabled {
+            statusText = "✓ ガード有効"
+        } else {
+            statusText = "✗ ガード無効"
+        }
         let statusItem = NSMenuItem(title: statusText, action: nil, keyEquivalent: "")
         statusItem.isEnabled = false
         menu.addItem(statusItem)
@@ -119,12 +129,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Startup
 
     private func checkPermissionAndStart() {
-        if !PermissionManager.isTrusted() {
+        if PermissionManager.isTrusted() {
+            // 権限あり → すぐ開始
+            if SettingsManager.shared.guardEnabled {
+                keyInterceptor.start()
+            }
+        } else {
+            // 権限なし → 権限要求 + 定期的にリトライ
             PermissionManager.requestPermission()
+            startPermissionPolling()
         }
+    }
 
-        if SettingsManager.shared.guardEnabled {
-            keyInterceptor.start()
+    private func startPermissionPolling() {
+        permissionTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] timer in
+            guard let self = self else { timer.invalidate(); return }
+
+            if PermissionManager.isTrusted() {
+                timer.invalidate()
+                self.permissionTimer = nil
+                self.updateMenu()
+
+                if SettingsManager.shared.guardEnabled {
+                    self.keyInterceptor.start()
+                }
+            }
         }
     }
 }
