@@ -93,6 +93,12 @@ class DiscordSendGuardApp:
             logger.error(f"Failed to create menu bar app: {e}")
             raise
 
+    def _get_base_dir(self) -> Path:
+        """Get base directory (handles PyInstaller bundle)"""
+        if getattr(sys, 'frozen', False):
+            return Path(sys._MEIPASS)
+        return Path(__file__).parent
+
     def _get_icon_path(self) -> str:
         """
         Get path to menu bar icon
@@ -100,9 +106,8 @@ class DiscordSendGuardApp:
         Returns:
             Path to icon file or None
         """
-        # Try to find icon in assets directory
-        current_dir = Path(__file__).parent
-        icon_path = current_dir / "assets" / "icon.png"
+        icon_path = self._get_base_dir() / "assets" / "icon.png"
+        logger.info(f"Looking for icon at: {icon_path} (exists: {icon_path.exists()})")
 
         if icon_path.exists():
             return str(icon_path)
@@ -273,21 +278,24 @@ class DiscordSendGuardApp:
         """Run the application"""
         logger.info("Starting Discord Send Guard menu bar app")
         try:
-            # Show startup notification after a short delay
-            def notify():
+            # Show startup dialog after a short delay
+            def show_startup():
                 import time
-                time.sleep(1)
+                import subprocess
+                time.sleep(0.5)
                 try:
-                    rumps.notification(
-                        title="Discord Send Guard",
-                        subtitle="起動しました",
-                        message="メニューバーの🛡️アイコンから操作できます"
-                    )
+                    subprocess.run([
+                        'osascript', '-e',
+                        'display dialog "Discord Send Guard が起動しました。\\n\\n'
+                        'メニューバー（画面右上）のアイコンから操作できます。" '
+                        'with title "Discord Send Guard" '
+                        'buttons {"OK"} default button "OK" '
+                        'giving up after 5'
+                    ], capture_output=True)
                 except Exception:
                     pass
 
-            import rumps
-            threading.Thread(target=notify, daemon=True).start()
+            threading.Thread(target=show_startup, daemon=True).start()
             self.app.run()
         except KeyboardInterrupt:
             logger.info("Interrupted by user")
