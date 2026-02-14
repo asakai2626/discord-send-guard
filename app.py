@@ -79,8 +79,7 @@ class DiscordSendGuardApp:
             # Create menu bar app
             self.app = rumps.App(
                 "Discord Send Guard",
-                icon=self._get_icon_path(),
-                quit_button=None  # Custom quit button
+                icon=self._get_icon_path()
             )
 
             # Add menu items
@@ -142,11 +141,7 @@ class DiscordSendGuardApp:
         # About
         self.app.menu.add(rumps.MenuItem("About", callback=self._show_about))
 
-        # Separator
-        self.app.menu.add(rumps.separator)
-
-        # Quit
-        self.app.menu.add(rumps.MenuItem("Quit", callback=self._quit))
+        # Quit is automatically added by rumps
 
     def _update_status(self):
         """Update status menu item"""
@@ -274,26 +269,28 @@ class DiscordSendGuardApp:
 
         rumps.alert("About Discord Send Guard", about_text)
 
-    def _quit(self, sender):
-        """Quit the application"""
-        logger.info("Quitting Discord Send Guard")
-
-        # Stop guard if running
-        if self.config.enabled:
-            self._stop_guard()
-
-        # Quit the app
-        import rumps
-        rumps.quit_application()
-
     def run(self):
         """Run the application"""
         logger.info("Starting Discord Send Guard menu bar app")
         try:
+            # Show startup notification after a short delay
+            def notify():
+                import time
+                time.sleep(1)
+                try:
+                    rumps.notification(
+                        title="Discord Send Guard",
+                        subtitle="起動しました",
+                        message="メニューバーの🛡️アイコンから操作できます"
+                    )
+                except Exception:
+                    pass
+
+            import rumps
+            threading.Thread(target=notify, daemon=True).start()
             self.app.run()
         except KeyboardInterrupt:
             logger.info("Interrupted by user")
-            self._quit(None)
         except Exception as e:
             logger.error(f"Application error: {e}")
             raise
