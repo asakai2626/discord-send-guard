@@ -5,6 +5,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let keyInterceptor = KeyInterceptor()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        DiscordDetector.startMonitoring()
         setupStatusItem()
         checkPermissionAndStart()
     }

@@ -69,6 +69,7 @@ private func keyCallback(
     event: CGEvent,
     refcon: UnsafeMutableRawPointer?
 ) -> Unmanaged<CGEvent>? {
+    // タップがタイムアウトで無効化された場合、再有効化する
     if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
         if let refcon = refcon {
             let interceptor = Unmanaged<KeyInterceptor>.fromOpaque(refcon).takeUnretainedValue()
@@ -76,32 +77,32 @@ private func keyCallback(
                 CGEvent.tapEnable(tap: tap, enable: true)
             }
         }
-        return Unmanaged.passUnretained(event)
+        return Unmanaged.passRetained(event)
     }
 
     guard type == .keyDown else {
-        return Unmanaged.passUnretained(event)
+        return Unmanaged.passRetained(event)
     }
 
     guard SettingsManager.shared.guardEnabled else {
-        return Unmanaged.passUnretained(event)
+        return Unmanaged.passRetained(event)
     }
 
     let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
     guard keyCode == 36 else {
-        return Unmanaged.passUnretained(event)
+        return Unmanaged.passRetained(event)
     }
 
-    guard DiscordDetector.isDiscordFrontmost() else {
-        return Unmanaged.passUnretained(event)
+    guard DiscordDetector.isDiscordFront else {
+        return Unmanaged.passRetained(event)
     }
 
     let flags = event.flags
     if flags.contains(.maskCommand) {
-        return Unmanaged.passUnretained(event)
+        return Unmanaged.passRetained(event)
     }
 
     // Enter without Cmd in Discord: Shift+Enter に変換して改行にする
     event.flags = flags.union(.maskShift)
-    return Unmanaged.passUnretained(event)
+    return Unmanaged.passRetained(event)
 }
