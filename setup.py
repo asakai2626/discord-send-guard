@@ -29,7 +29,7 @@ DATA_FILES = [
 
 OPTIONS = {
     'argv_emulation': False,
-    'packages': ['rumps', 'pynput', 'tkinter', 'PIL'],
+    'packages': ['rumps', 'pynput', 'tkinter', 'PIL', 'gui', 'utils'],
     'iconfile': 'assets/app_icon.icns',  # Will be created
     'plist': {
         'CFBundleName': 'Discord Send Guard',

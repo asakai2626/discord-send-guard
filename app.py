@@ -51,7 +51,14 @@ class DiscordSendGuardApp:
 
         # Check for first run
         if self.config.first_run:
-            logger.info("First run detected - showing setup wizard")
+            logger.info("First run detected")
+            # Mark first run as done (wizard may fail in bundled app)
+            self.config.first_run = False
+            try:
+                from utils.config import save_config
+                save_config(self.config)
+            except Exception:
+                pass
             self._run_setup_wizard()
 
         # Create menu bar app
