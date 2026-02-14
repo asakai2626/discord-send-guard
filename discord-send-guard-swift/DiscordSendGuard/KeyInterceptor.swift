@@ -2,9 +2,10 @@ import Foundation
 import CoreGraphics
 
 final class KeyInterceptor {
-    private var eventTap: CFMachPort?
+    fileprivate var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
     private var tapThread: Thread?
+    private var tapRunLoop: CFRunLoop?
 
     var isRunning: Bool {
         return eventTap != nil
@@ -27,13 +28,18 @@ final class KeyInterceptor {
             if let source = runLoopSource {
                 CFRunLoopSourceInvalidate(source)
             }
+            if let runLoop = tapRunLoop {
+                CFRunLoopStop(runLoop)
+            }
             eventTap = nil
             runLoopSource = nil
+            tapRunLoop = nil
         }
     }
 
     private func setupEventTap() {
         let eventMask: CGEventMask = (1 << CGEventType.keyDown.rawValue)
+        let selfPtr = Unmanaged.passUnretained(self).toOpaque()
 
         guard let tap = CGEvent.tapCreate(
             tap: .cgSessionEventTap,
@@ -41,7 +47,7 @@ final class KeyInterceptor {
             options: .defaultTap,
             eventsOfInterest: eventMask,
             callback: keyCallback,
-            userInfo: nil
+            userInfo: selfPtr
         ) else {
             DispatchQueue.main.async {
                 PermissionManager.showPermissionGuide()
@@ -50,6 +56,7 @@ final class KeyInterceptor {
         }
 
         eventTap = tap
+        tapRunLoop = CFRunLoopGetCurrent()
         runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
         CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
         CGEvent.tapEnable(tap: tap, enable: true)
@@ -62,39 +69,39 @@ private func keyCallback(
     event: CGEvent,
     refcon: UnsafeMutableRawPointer?
 ) -> Unmanaged<CGEvent>? {
-    // If the tap is disabled by the system, re-enable it
     if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
-        return Unmanaged.passRetained(event)
+        if let refcon = refcon {
+            let interceptor = Unmanaged<KeyInterceptor>.fromOpaque(refcon).takeUnretainedValue()
+            if let tap = interceptor.eventTap {
+                CGEvent.tapEnable(tap: tap, enable: true)
+            }
+        }
+        return Unmanaged.passUnretained(event)
     }
 
-    // Only process keyDown events
     guard type == .keyDown else {
-        return Unmanaged.passRetained(event)
+        return Unmanaged.passUnretained(event)
     }
 
-    // Check if guard is enabled
     guard SettingsManager.shared.guardEnabled else {
-        return Unmanaged.passRetained(event)
+        return Unmanaged.passUnretained(event)
     }
 
-    // Only intercept Enter key (keyCode 36)
     let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
     guard keyCode == 36 else {
-        return Unmanaged.passRetained(event)
+        return Unmanaged.passUnretained(event)
     }
 
-    // Only intercept when Discord is frontmost
     guard DiscordDetector.isDiscordFrontmost() else {
-        return Unmanaged.passRetained(event)
+        return Unmanaged.passUnretained(event)
     }
 
-    // If Cmd is held, allow the send (pass through)
     let flags = event.flags
     if flags.contains(.maskCommand) {
-        return Unmanaged.passRetained(event)
+        return Unmanaged.passUnretained(event)
     }
 
-    // Enter without Cmd in Discord: add Shift flag to convert to newline
+    // Enter without Cmd in Discord: Shift+Enter に変換して改行にする
     event.flags = flags.union(.maskShift)
-    return Unmanaged.passRetained(event)
+    return Unmanaged.passUnretained(event)
 }
